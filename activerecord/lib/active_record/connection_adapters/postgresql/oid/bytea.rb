@@ -31,6 +31,8 @@ module ActiveRecord
                   bytea column received a binary string for unescaping. In Rails 9.0, binary strings
                   will be treated as already unescaped.
                 MSG
+
+                return value if value.include?("\0")
               end
 
             else

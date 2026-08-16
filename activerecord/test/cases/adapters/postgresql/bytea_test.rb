@@ -55,6 +55,16 @@ class PostgresqlByteaTest < ActiveRecord::PostgreSQLTestCase
     end
   end
 
+  def test_type_cast_binary_value_with_null_bytes
+    decoded = "\x01\x00\x02\x00\x03".b
+
+    assert_deprecated(ActiveRecord.deprecator) do
+      result = @type.deserialize(decoded)
+      assert_equal decoded, result
+      assert_equal Encoding::BINARY, result.encoding
+    end
+  end
+
   def test_type_cast_marked_true_value
     decoded = "\\x414243".b
     decoded.instance_variable_set(:@ar_pg_bytea_decoded, true)
