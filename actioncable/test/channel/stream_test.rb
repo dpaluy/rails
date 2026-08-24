@@ -397,13 +397,18 @@ module ActionCable::StreamTests
         open_connection
         subscribe_to identifiers: { id: 1 }
 
-        assert_not_called ActiveSupport::JSON, :decode do
-          server.broadcast "test_room_1", %({ "foo": "bar" }), coder: nil
-          wait_for_async
-        end
-
         identifier = JSON.generate(id: 1, channel: "ActionCable::StreamTests::ChatChannel")
         expected = %({"identifier":#{ActiveSupport::JSON.encode(identifier)},"message":{ "foo": "bar" }})
+
+        assert_not_called ActiveSupport::JSON, :decode do
+          assert_notifications_count("transmit.action_cable", 1) do
+            assert_notification("transmit.action_cable", channel_class: "ActionCable::StreamTests::ChatChannel", data: expected, via: "streamed from test_room_1") do
+              server.broadcast "test_room_1", %({ "foo": "bar" }), coder: nil
+              wait_for_async
+            end
+          end
+        end
+
         assert_equal expected, socket.transmissions.last
       end
     end

@@ -106,6 +106,14 @@ class StreamsTestChannel < ActionCable::Channel::Base
 end
 
 class StreamsTestChannelTest < ActionCable::Channel::TestCase
+  def test_stream_broadcast_is_transmitted_decoded
+    subscribe id: 42
+
+    testserver.streams["test_42"].each { |handler| handler.call(JSON.generate({ text: "hi" })) }
+
+    assert_equal({ "text" => "hi" }, transmissions.last)
+  end
+
   def test_stream_without_params
     subscribe
 
