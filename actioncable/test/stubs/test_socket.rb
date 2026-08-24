@@ -3,7 +3,7 @@
 require "stubs/user"
 
 class TestSocket
-  attr_reader :identifiers, :logger, :current_user, :server, :subscriptions, :transmissions
+  attr_reader :identifiers, :logger, :current_user, :server, :subscriptions, :transmissions, :coder
 
   delegate :pubsub, :config, :executor, to: :server
 
@@ -24,6 +24,10 @@ class TestSocket
 
   def transmit(cable_message)
     @transmissions << encode(cable_message)
+  end
+
+  def transmit_raw(raw_message)
+    @transmissions << raw_message
   end
 
   def last_transmission

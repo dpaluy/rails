@@ -187,14 +187,18 @@ module ActionCable
         # May be overridden to change the default stream handling behavior which decodes
         # JSON and transmits to the client.
         #
-        # TODO: Tests demonstrating this.
-        #
-        # TODO: Room for optimization. Update transmit API to be coder-aware so we can
-        # no-op when pubsub and connection are both JSON-encoded. Then we can skip
-        # decode+encode if we're just proxying messages.
+        # When both the broadcasting coder and the connection coder are
+        # ActiveSupport::JSON, the payload is proxied as-is: the raw pub/sub
+        # message is embedded in the client envelope without decoding and
+        # re-encoding it for every subscriber.
         def default_stream_handler(broadcasting, coder:)
           coder ||= ActiveSupport::JSON
-          stream_transmitter stream_decoder(coder: coder), broadcasting: broadcasting
+
+          if coder == ActiveSupport::JSON && connection.coder == ActiveSupport::JSON
+            stream_raw_transmitter broadcasting
+          else
+            stream_transmitter stream_decoder(coder: coder), broadcasting: broadcasting
+          end
         end
 
         def stream_decoder(handler = nil, coder:)
@@ -219,6 +223,15 @@ module ActionCable
           -> (message) do
             message = handler.(message) if handler
             transmit message, via: via
+          end
+        end
+
+        def stream_raw_transmitter(broadcasting)
+          via = "streamed from #{broadcasting}"
+          encoded_identifier = ActiveSupport::JSON.encode(identifier)
+
+          -> (message) do
+            transmit_raw %({"identifier":#{encoded_identifier},"message":#{message}}), via: via
           end
         end
     end

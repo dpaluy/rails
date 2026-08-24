@@ -63,7 +63,7 @@ module ActionCable
       attr_reader :subscriptions, :logger
 
       delegate :pubsub, :executor, :config, :broadcast, to: :server
-      delegate :env, :request, :protocol, :perform_work, to: :socket, allow_nil: true
+      delegate :env, :request, :protocol, :perform_work, :coder, to: :socket, allow_nil: true
 
       def initialize(server, socket)
         @server = server
@@ -115,6 +115,12 @@ module ActionCable
 
       def transmit(data) # :nodoc:
         socket.transmit(data)
+      end
+
+      # Transmits a message that is already encoded for the wire, skipping
+      # the coder. Used when proxying a payload that is already encoded.
+      def transmit_raw(data) # :nodoc:
+        socket.transmit_raw(data)
       end
 
       # Close the connection.

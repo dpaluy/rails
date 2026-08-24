@@ -1,3 +1,13 @@
+*   Skip the JSON decode + re-encode when proxying default stream broadcasts.
+
+    When both the broadcasting coder and the connection coder are `ActiveSupport::JSON`,
+    the pub/sub payload is now embedded directly into the client envelope instead of
+    being decoded and re-encoded for every subscriber. On the fast path, the
+    `transmit.action_cable` instrumentation payload carries the raw encoded message
+    string as `data` instead of the decoded Hash.
+
+    *David Paluy*
+
 *   Move `ActionCable::Server::Configuration` to `ActionCable::Configuration`.
 
     The old constant remains available as an alias.

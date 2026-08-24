@@ -93,8 +93,16 @@ module ActionCable
         @transmissions = []
       end
 
+      def coder
+        ActiveSupport::JSON
+      end
+
       def transmit(data)
         @transmissions << data.with_indifferent_access
+      end
+
+      def transmit_raw(data)
+        transmit ActiveSupport::JSON.decode(data)
       end
 
       def close

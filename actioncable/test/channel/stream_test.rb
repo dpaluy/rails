@@ -2,6 +2,7 @@
 
 require "test_helper"
 require "minitest/mock"
+require "json"
 require "stubs/test_socket"
 require "stubs/room"
 require "concurrent/atomic/cyclic_barrier"
@@ -388,6 +389,35 @@ module ActionCable::StreamTests
         end
 
         assert_equal({ "foo" => "bar" }, socket.last_transmission.fetch("message"))
+      end
+    end
+
+    test "default stream handler proxies the raw JSON payload without decoding it" do
+      run_in_eventmachine do
+        open_connection
+        subscribe_to identifiers: { id: 1 }
+
+        assert_not_called ActiveSupport::JSON, :decode do
+          server.broadcast "test_room_1", %({ "foo": "bar" }), coder: nil
+          wait_for_async
+        end
+
+        identifier = JSON.generate(id: 1, channel: "ActionCable::StreamTests::ChatChannel")
+        expected = %({"identifier":#{ActiveSupport::JSON.encode(identifier)},"message":{ "foo": "bar" }})
+        assert_equal expected, socket.transmissions.last
+      end
+    end
+
+    test "default stream handler decodes and re-encodes when the connection coder is not JSON" do
+      run_in_eventmachine do
+        @socket = TestSocket.new(coder: DummyEncoder)
+        @connection = Connection.new(@server, @socket)
+        subscribe_to identifiers: { id: 1 }
+
+        server.broadcast "test_room_1", { foo: "bar" }
+        wait_for_async
+
+        assert_equal DummyEncoder.encode({}), socket.transmissions.last
       end
     end
 

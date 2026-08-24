@@ -250,6 +250,23 @@ module ActionCable
           end
         end
 
+        # Transmit a payload that is already encoded for the wire to the
+        # subscriber, skipping the coder. Used by default stream handling
+        # when both the broadcasting and the connection are JSON-encoded,
+        # so the pub/sub payload can be proxied without decode + encode.
+        def transmit_raw(data, via: nil) # :nodoc:
+          logger.debug do
+            status = "#{self.class.name} transmitting raw #{data.truncate(300)}"
+            status += " (via #{via})" if via
+            status
+          end
+
+          payload = { channel_class: self.class.name, data: data, via: via }
+          ActiveSupport::Notifications.instrument("transmit.action_cable", payload) do
+            connection.transmit_raw data
+          end
+        end
+
         def ensure_confirmation_sent # :doc:
           return if subscription_rejected?
           @defer_subscription_confirmation_counter.decrement

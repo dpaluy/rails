@@ -10,7 +10,7 @@ module ActionCable
     # This connection object is also responsible for handling encoding and decoding of messages, so the user-level
     # connection object shouldn't know about such details.
     class Socket
-      attr_reader :server, :env, :protocol, :logger, :connection
+      attr_reader :server, :env, :protocol, :logger, :connection, :coder
       private attr_reader :worker_pool
 
       delegate :event_loop, :pubsub, :config, to: :server
@@ -46,6 +46,14 @@ module ActionCable
         return unless websocket.alive?
 
         websocket.transmit encode(cable_message)
+      end
+
+      # Send a message that is already encoded for the wire, skipping the
+      # coder. Used when proxying a payload that is already encoded.
+      def transmit_raw(raw_message) # :nodoc:
+        return unless websocket.alive?
+
+        websocket.transmit raw_message
       end
 
       # Close the WebSocket connection.
