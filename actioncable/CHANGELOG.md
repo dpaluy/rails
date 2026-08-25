@@ -4,7 +4,9 @@
     the pub/sub payload is now embedded directly into the client envelope instead of
     being decoded and re-encoded for every subscriber. On the fast path, the
     `transmit.action_cable` instrumentation payload carries the raw encoded message
-    string as `data` instead of the decoded Hash.
+    string as `data` instead of the decoded Hash. A non-JSON payload published to a
+    JSON-coded default stream is now proxied to clients as-is instead of raising a
+    decode error server-side.
 
     *David Paluy*
 
